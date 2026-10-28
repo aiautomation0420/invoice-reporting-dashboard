@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FLAG_HELP } from "@/lib/config";
 import { getInvoice } from "@/lib/queries/invoices";
+import { SHOW_PRIVATE_LINKS } from "@/lib/supabase";
 import { mathIssues } from "@/lib/report";
 import { count, date, dateTime, duration, flagLabel, money, percent, sourceLabel } from "@/lib/format";
 import { Panel } from "@/components/Panel";
@@ -141,8 +142,12 @@ export default async function InvoicePage({ params }: Props) {
             <Field label="Source">{sourceLabel(inv.source)}</Field>
             <Field label="File name">{inv.file_name}</Field>
           </dl>
-          {/* Only plain https links: the value comes from the database, never trust it as a raw href. */}
-          {inv.file_link?.startsWith("https://") && (
+          {/* Gmail/Drive links are private: shown only when SHOW_PRIVATE_LINKS=true (local).
+              Only plain https links: the value comes from the database, never trust it as a raw href. */}
+          {inv.file_link && !SHOW_PRIVATE_LINKS && (
+            <p className="mt-5 border-t border-line pt-4 text-xs text-muted">The link to the original file is hidden on the public site.</p>
+          )}
+          {SHOW_PRIVATE_LINKS && inv.file_link?.startsWith("https://") && (
             <div className="mt-5 border-t border-line pt-4">
               <a href={inv.file_link} target="_blank" rel="noreferrer" className="text-sm font-medium underline decoration-line underline-offset-4 hover:decoration-fg">
                 Open original file ↗

@@ -1,4 +1,4 @@
-import { db } from "@/lib/supabase";
+import { scoped } from "@/lib/supabase";
 import { buckets, summarize, topVendors } from "@/lib/report";
 import { DAY } from "@/lib/week";
 import { invoicesBetween } from "./reports";
@@ -14,13 +14,13 @@ export function parseRange(value: string | undefined): Range {
 async function systemHealth(now: number) {
   const since = new Date(now - 7 * DAY).toISOString();
   const [runs, errors, last] = await Promise.all([
-    db().from("run_log").select("id", { count: "exact", head: true }).gte("created_at", since),
-    db().from("error_log").select("id", { count: "exact", head: true }).gte("created_at", since),
+    scoped("run_log", "id", { count: "exact", head: true }).gte("created_at", since),
+    scoped("error_log", "id", { count: "exact", head: true }).gte("created_at", since),
     // run_log only gets a row when an invoice was processed successfully.
-    db().from("run_log").select("created_at").order("created_at", { ascending: false }).limit(1),
+    scoped("run_log", "created_at").order("created_at", { ascending: false }).limit(1),
   ]);
   for (const result of [runs, errors, last]) if (result.error) throw new Error(result.error.message);
-  return { runs: runs.count ?? 0, errors: errors.count ?? 0, lastRun: (last.data?.[0]?.created_at as string) ?? null };
+  return { runs: runs.count ?? 0, errors: errors.count ?? 0, lastRun: (last.data as unknown as { created_at: string }[] | null)?.[0]?.created_at ?? null };
 }
 
 export async function getOverview(range: Range) {

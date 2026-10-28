@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { APPROVAL_LIMIT, FLAG_HELP, FLAG_LABELS, MINUTES_PER_INVOICE, PORTFOLIO_URL, TIME_ZONE } from "@/lib/config";
 import { count, hours, money } from "@/lib/format";
-import { db } from "@/lib/supabase";
+import { scoped } from "@/lib/supabase";
 import { FlowDiagram } from "@/components/FlowDiagram";
 
 export const metadata: Metadata = { title: "How it works" };
@@ -26,7 +26,7 @@ const definitions: [string, string][] = [
 /** Total invoices so far, for the live hours-saved example. Null if the database can't be reached. */
 async function invoicesSoFar() {
   try {
-    const { count: total, error } = await db().from("invoices").select("id", { count: "exact", head: true });
+    const { count: total, error } = await scoped("invoices", "id", { count: "exact", head: true });
     return error ? null : (total ?? 0);
   } catch {
     return null;

@@ -1,30 +1,32 @@
-import { db } from "@/lib/supabase";
+import { scoped } from "@/lib/supabase";
 import { summarize, type InvoiceRow } from "@/lib/report";
 import { WEEK, parseWeekKey, dateKey, weekStart } from "@/lib/week";
 
 const PAGE = 1000; // Supabase returns at most 1000 rows per request
+// shortcut: one page load reads at most 20,000 invoices; move the math into a SQL view before real volume gets near that.
+const MAX_PAGES = 20;
 
 /** Invoice rows created in [from, to), fetched page by page. */
 export async function invoicesBetween(from: number, to: number) {
   const rows: InvoiceRow[] = [];
-  for (let page = 0; ; page++) {
-    const { data, error } = await db()
-      .from("invoices")
-      .select("status, flag_reasons, total, created_at, vendor")
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const { data, error } = await scoped("invoices", "status, flag_reasons, total, created_at, vendor")
       .gte("created_at", new Date(from).toISOString())
       .lt("created_at", new Date(to).toISOString())
       .order("created_at")
       .range(page * PAGE, page * PAGE + PAGE - 1);
     if (error) throw new Error(error.message);
-    rows.push(...(data as InvoiceRow[]));
+    rows.push(...(data as unknown as InvoiceRow[]));
     if (data.length < PAGE) return rows;
   }
+  return rows;
 }
 
 async function firstInvoiceAt() {
-  const { data, error } = await db().from("invoices").select("created_at").order("created_at").limit(1);
+  const { data, error } = await scoped("invoices", "created_at").order("created_at").limit(1);
   if (error) throw new Error(error.message);
-  return data[0] ? Date.parse(data[0].created_at) : null;
+  const first = (data as unknown as { created_at: string }[])[0];
+  return first ? Date.parse(first.created_at) : null;
 }
 
 /** One week's summary next to the week before. Defaults to the last full week. */

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ERRORS_PAGE_SIZE, listErrors, type WorkflowError } from "@/lib/queries/errors";
 import { count, dateTime, timeAgo } from "@/lib/format";
+import { SHOW_PRIVATE_LINKS } from "@/lib/supabase";
 import { LastUpdated } from "@/components/LastUpdated";
 import { Pagination } from "@/components/Pagination";
 
@@ -10,9 +11,10 @@ export const dynamic = "force-dynamic";
 
 const href = (page: number) => (page > 1 ? `/errors?page=${page}` : "/errors");
 
+// Run links reveal the n8n server address, so they only show when SHOW_PRIVATE_LINKS=true (local).
 // Only plain https links: the value comes from the database, never trust it as a raw href.
 function RunLink({ error }: { error: WorkflowError }) {
-  if (!error.run_link?.startsWith("https://")) return <span className="text-muted">—</span>;
+  if (!SHOW_PRIVATE_LINKS || !error.run_link?.startsWith("https://")) return null;
   return (
     <a href={error.run_link} target="_blank" rel="noreferrer" className="whitespace-nowrap underline decoration-line underline-offset-4 hover:decoration-fg">
       Open in n8n ↗
@@ -56,7 +58,7 @@ export default async function ErrorsPage({ searchParams }: { searchParams: Promi
                   <th className="px-5 py-3 font-medium">Workflow</th>
                   <th className="px-5 py-3 font-medium">Failed step</th>
                   <th className="px-5 py-3 font-medium">Message</th>
-                  <th className="px-5 py-3 font-medium">Run</th>
+                  {SHOW_PRIVATE_LINKS && <th className="px-5 py-3 font-medium">Run</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-line align-top">
@@ -69,7 +71,7 @@ export default async function ErrorsPage({ searchParams }: { searchParams: Promi
                     <td className="px-5 py-3 text-muted">{e.workflow ?? "—"}</td>
                     <td className="px-5 py-3 font-medium">{e.node ?? "—"}</td>
                     <td className="px-5 py-3 font-mono text-xs break-words">{e.message ?? "—"}</td>
-                    <td className="px-5 py-3"><RunLink error={e} /></td>
+                    {SHOW_PRIVATE_LINKS && <td className="px-5 py-3"><RunLink error={e} /></td>}
                   </tr>
                 ))}
               </tbody>
@@ -86,7 +88,7 @@ export default async function ErrorsPage({ searchParams }: { searchParams: Promi
                 </div>
                 <p className="mt-1 text-xs text-muted">{e.workflow ?? "—"} · {dateTime(e.created_at)}</p>
                 <p className="mt-3 font-mono text-xs break-words">{e.message ?? "—"}</p>
-                <p className="mt-3 text-xs"><RunLink error={e} /></p>
+                {SHOW_PRIVATE_LINKS && <p className="mt-3 text-xs"><RunLink error={e} /></p>}
               </li>
             ))}
           </ul>

@@ -61,7 +61,14 @@ Gmail / Google Drive ──► n8n: AI Invoice Processing & Audit Agent ──�
 
 Four runtime dependencies in total. Design matches my portfolio (Inter, black/white/gray); color is used only for invoice statuses, and the status colors were checked for color-blind readers.
 
-**Security:** the site is read-only. Pages fetch data on the server with Supabase's *publishable* key, and row-level security only allows reading these five tables. No key ever reaches the browser, and there are no buttons that change data.
+### Security
+
+- **Read-only, server-side.** Pages fetch data on the server (`import "server-only"` guards it); no key or Supabase address reaches the browser, and there are no buttons that change data.
+- **Least-privilege key.** The live site uses Supabase's *publishable* key. Row-level security lets it read **demo rows only** of `invoices`, `run_log` and `error_log`, and nothing else in the project (`supabase/security-hardening.sql`). Writes are blocked (tested).
+- **Demo data only in public.** `DATA_SCOPE` defaults to `demo`. Real invoices (`all` / `real`) need the secret key and only work on your own computer; the app refuses them on Vercel.
+- **No private links in public.** Links to n8n runs and original Gmail/Drive files only show with `SHOW_PRIVATE_LINKS=true` (local).
+- **Hardened responses.** Content-Security-Policy, `frame-ancestors 'none'` / `X-Frame-Options: DENY`, `nosniff`, strict Referrer-Policy, Permissions-Policy; no `X-Powered-By`, no public source maps; friendly error pages without database details.
+- **Bounded inputs.** Search is length-limited and stripped of filter syntax, filters are validated, the CSV is a two-week summary, and one page load reads at most 20,000 rows.
 
 ## Run it locally
 
@@ -75,6 +82,9 @@ npm run dev                  # http://localhost:3000
 Database setup (Supabase → SQL Editor):
 - Invoice tables **already exist** (created for the n8n workflow): run `supabase/add-dashboard-access.sql`.
 - **Brand-new** project: run `supabase/schema.sql`.
+- Then, always: run `supabase/security-hardening.sql` (RLS on every table, demo-only reads for the website key).
+
+Local settings in `.env.local` (see `.env.example`): `DATA_SCOPE=all` shows n8n's real invoices on your computer (uses the secret key, refused on Vercel); `SHOW_PRIVATE_LINKS=true` shows n8n run and Gmail/Drive links. Leave both unset on Vercel.
 
 Other commands: `npm test` (report math, weeks, CSV), `npm run typecheck`, `npm run build`.
 
@@ -96,7 +106,7 @@ lib/format.ts     all money / % / date formatting
 lib/report.ts     the report math (shared by Overview, Reports and the CSV) + tests
 lib/queries/      every Supabase read
 scripts/seed.ts   demo data generator
-supabase/         SQL for the tables and read-only access
+supabase/         SQL: tables, read-only access, security hardening
 ```
 
 ## Data contract (what the n8n workflow must write)
