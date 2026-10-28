@@ -57,7 +57,7 @@ Gmail / Google Drive ──► n8n: AI Invoice Processing & Audit Agent ──�
 - **Tailwind CSS 4**, light and dark mode (follows the device)
 - **Supabase** (Postgres) as the data source, read on the server only
 - **Recharts** for the two time charts; everything else is plain HTML
-- Deployed on **Vercel**
+- Ready to deploy on **Vercel** (env vars and settings in the Security section)
 
 Four runtime dependencies in total. Design matches my portfolio (Inter, black/white/gray); color is used only for invoice statuses, and the status colors were checked for color-blind readers.
 
