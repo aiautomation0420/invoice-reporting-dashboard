@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+/* Color tokens: use bg-bg, text-fg, text-muted, border-line, text-clean, ... in components. */
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-clean: var(--clean);
+  --color-flagged: var(--flagged);
+  --color-approved: var(--approved);
+  --color-rejected: var(--rejected);
+}
+
+/* Light mode. Status colors checked with the dataviz palette validator (color-blind safe, 3:1 contrast). */
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --fg: #0a0a0a;
+  --muted: #5c5c5c;
+  --line: rgb(0 0 0 / 0.1);
+  --clean: #116329;
+  --flagged: #bf8700;
+  --approved: #0969da;
+  --rejected: #cf222e;
+  color-scheme: light;
+}
+
+/* Dark mode: same black as the portfolio. Follows the device setting. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --surface: #0a0a0a;
+    --fg: #fafafa;
+    --muted: #a3a3a3;
+    --line: rgb(255 255 255 / 0.1);
+    --clean: #1a7431;
+    --flagged: #bb8a20;
+    --approved: #388bfd;
+    --rejected: #e5534b;
+    color-scheme: dark;
+  }
+}
+
+html {
+  background: var(--bg);
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background: var(--bg);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--fg) 20%, transparent);
+}
